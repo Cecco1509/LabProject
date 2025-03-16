@@ -1,0 +1,7 @@
+def main with input x output y as
+  y := x;
+  while y > 0 do
+    if x < y then
+      y := y - x
+    else
+      x := x - y

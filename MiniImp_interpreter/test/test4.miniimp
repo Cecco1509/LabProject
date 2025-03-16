@@ -1,0 +1,2 @@
+def main with input x output y as
+  if x < 10 then y := 1 else y := 0

@@ -1,0 +1,4 @@
+def main with input x output y as
+  while x >= 5 do
+    x := x - 5;
+  y := x

@@ -1,0 +1,9 @@
+def main with input x output y as
+  a := 0;
+  b := 1;
+  while x > 0 do
+    t := a + b;
+    a := b;
+    b := t;
+    x := x - 1;
+  y := a
