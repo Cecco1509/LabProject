@@ -19,7 +19,6 @@ and bexp =
 and c = 
   | Skip
   | Let of var * aexp
-  | Apply of var * r
   | Seq of c * c
   | If of bexp * c * c
   | While of bexp * c
