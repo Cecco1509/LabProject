@@ -1,0 +1,4 @@
+(executable
+ (public_name MiniImp_interpreter)
+ (name main)
+ (libraries MiniImp))

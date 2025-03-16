@@ -1,0 +1,23 @@
+(lang dune 3.5)
+(using menhir 2.1)
+
+(name MiniImp_interpreter)
+
+(generate_opam_files true)
+
+(source
+ (github Cecco1509/LabProject))
+
+(authors "Lorenzo Ceccotti")
+
+(maintainers "Maintainer Name")
+
+(package
+ (name MiniImp_interpreter)
+ (synopsis "A short synopsis")
+ (description "A longer description")
+ (depends ocaml dune ocamllex menhir)
+ (tags
+  (topics "to describe" your project)))
+
+; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project
