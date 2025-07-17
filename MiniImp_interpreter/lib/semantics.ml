@@ -17,7 +17,7 @@ and bexp =
 
 and c = 
   | Skip
-  | Let of var * aexp
+  | Assign of var * aexp
   | Seq of c * c
   | If of bexp * c * c
   | While of bexp * c
@@ -26,42 +26,54 @@ and c =
 (* Ambiente/Memoria *)
 type env = var -> int option;;
 
-let emptyenv = function _x-> None;;
+let _emptyenv = function _x-> None;;
 
-(*Binding fra una stringa x e un Num *)
-let bind (s: env) (x: var) (v: int option) =
-  function (i: var) -> if (i = x) then v else (s i);;
+let hash_env = Hashtbl.create 16;;
 
+(*
+If var is not in the environment, it will add to it with value v.
+If var is already in the enviroment, it will update the value with v.
+*)
+let bind (x: var) (v: int) : unit =
+  Hashtbl.replace hash_env x v
+;;
+
+let lookup (x: var) : int option =
+  Hashtbl.find_opt hash_env x
+;;
 
 (* Alg expressions eval function *)
-let rec eval_aexp (e: env) (exp: aexp) : int =
+let rec eval_aexp (exp: aexp) : int =
   match exp with
   | Num n -> n
-  | Var x -> (match e x with
+  | Var x -> (match lookup x with
     | Some(v) -> v
     | None -> failwith ("Variable " ^ x ^ " not found"))
-  | Plus (a1, a2) -> (eval_aexp e a1) + (eval_aexp e a2)
-  | Minus (a1, a2) -> (eval_aexp e a1) - (eval_aexp e a2)
-  | Times (a1, a2) -> (eval_aexp e a1) * (eval_aexp e a2)
+  | Plus (a1, a2) -> (eval_aexp a1) + (eval_aexp a2)
+  | Minus (a1, a2) -> (eval_aexp a1) - (eval_aexp a2)
+  | Times (a1, a2) -> (eval_aexp a1) * (eval_aexp a2)
 ;;
 
 (* Bool expressions eval function *)
-let rec eval_bexp (e: env) (exp: bexp) : bool =
+let rec eval_bexp (exp: bexp) : bool =
   match exp with
   | Bool b -> b
-  | And (b1, b2) -> (eval_bexp e b1) && (eval_bexp e b2)
-  | Not b -> not (eval_bexp e b)
-  | Less (a1, a2) -> (eval_aexp e a1) < (eval_aexp e a2)
+  | And (b1, b2) -> (eval_bexp b1) && (eval_bexp b2)
+  | Not b -> not (eval_bexp b)
+  | Less (a1, a2) -> (eval_aexp a1) < (eval_aexp a2)
 ;;
 
 (* Command expressions eval function *)
-let rec eval_command (e: env) (c: c) : env =
+let rec eval_command (c: c) : unit =
   match c with
-  | Skip -> e
-  | Let (var_name, value) -> bind e var_name (Some(eval_aexp e value))
-  | Seq (c1, c2) -> let e1 = eval_command e c1 in eval_command e1 c2
-  | If (b, c1, c2) -> if (eval_bexp e b) then eval_command e c1 else eval_command e c2
-  | While (b, c1) -> if (eval_bexp e b) then eval_command e (Seq(c1, While(b,c1))) else e
+  | Skip -> ()
+  | Assign (var_name, value) -> bind var_name (eval_aexp value)
+  | Seq (c1, c2) -> (
+    eval_command c1; 
+    eval_command c2
+  )
+  | If (b, c1, c2) -> if (eval_bexp b) then eval_command c1 else eval_command c2
+  | While (b, c1) -> if (eval_bexp b) then eval_command (Seq(c1, While(b,c1))) else ()
 ;;
 
 
@@ -69,10 +81,10 @@ let rec eval_command (e: env) (c: c) : env =
 let eval_prg (p: prog) (input: int) : int option =
   match p with
   | Main (x, y, c) -> 
-    let e1 = bind emptyenv x (Some(input)) in
-    let e2 = bind e1 y None in
-    let result_env = eval_command e2 c in
-    result_env y
+    bind x input;
+    bind y 0;
+    eval_command c;
+    lookup y
   ;;
 
 
