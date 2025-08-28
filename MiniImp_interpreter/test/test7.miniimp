@@ -1,5 +1,6 @@
 def main with input x output y as
   y := 0;
-  while x > 0 do
+  while 0 < x do (
     y := y + x;
     x := x - 1
+  )

@@ -1,7 +1,5 @@
 def main with input x output y as
-  y := 1;
-  (while 0 < x do (
-    y := 5; 
-    skip
-  );)
-  x := x - 1
+  y := 50;
+  while 0 < x do
+    x := x - 1;
+  y := 60
