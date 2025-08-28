@@ -1,27 +1,33 @@
-type prog = Main of string * string * c
+type ide = string;;
 
-and var = string 
+type term =
+  | TNum of int
+  | TBool of bool
+  | Var of ide
+  | Plus of term * term
+  | Minus of term * term
+  | Times of term * term
+  | And of term * term
+  | Not of term
+  | Less of term * term
+  | Let of ide * term * term
+  | IfThenElse of term * term * term
+  | LetFun of ide * ide * term * term
+  | Fun of ide * term
+  | FunApp of term * term
+  | RecFunApp of term * term
+;;
 
-and aexp =
-  | Num of int
-  | Var of string
-  | Plus of aexp * aexp
-  | Minus of aexp * aexp
-  | Times of aexp * aexp
+type env = ide -> envT
 
-and bexp =
+and envT = 
+  | Int of int
   | Bool of bool
-  | And of bexp * bexp
-  | Not of bexp
-  | Less of aexp * aexp
+  | Closure of ide * term * env
+  | RecClosure of ide * ide * term * env
+  | UnBound
+;;
 
-and c = 
-  | Skip
-  | Let of var * aexp
-  | Seq of c * c
-  | If of bexp * c * c
-  | While of bexp * c
+val emptyenv : ide -> envT
 
-type env = var -> int option;;
-
-val eval_prg : prog -> int -> int option
+val eval : term -> int -> string
