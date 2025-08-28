@@ -1,0 +1,20 @@
+letfun f x = (
+    x + 1
+  ) in (
+    letfun g y = (
+        y * 2
+        ) in ( 
+            let z = ((((f 3)))) in (
+                if (not z < 10) then (
+                    let w = ((((g z)))) in (
+                        ((f w) + (g z))
+                    )
+                ) else (
+                    ( (f (g (2))) - z )
+                )
+            )
+        )
+)
+
+
+

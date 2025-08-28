@@ -1,0 +1,4 @@
+let x = 2 in
+let y = 3 in
+letfun f z = z * z in
+f (x + y)

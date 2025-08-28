@@ -1,0 +1,5 @@
+fun x => (
+  let mult_x = (fun y => (fun z => (5 * y + z))) in (
+    mult_x x x
+  )
+)
