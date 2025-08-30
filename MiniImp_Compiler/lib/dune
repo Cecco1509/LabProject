@@ -1,0 +1,10 @@
+(library
+ (name MiniImp)
+ (modules Ast ControlFlowGraph DefinedVars MiniRiscCfg MiniRiscAst Liveness Optimizer RegisterAllocation GenerateCode Parser Lexer))
+
+(ocamllex lexer)
+
+(menhir
+ (modules parser)
+ (flags --explain))
+
