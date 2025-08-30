@@ -1,0 +1,2 @@
+def main with input a output b as
+  b := a + 9 + 0

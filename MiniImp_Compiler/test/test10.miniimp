@@ -1,0 +1,23 @@
+def main with input a output b as
+  z := 1;
+  z := z + 2;
+  if z < 10 then
+    z := z * 2
+  else(
+    z := z - 1
+  );
+  while z < 100 do (
+    z := z + 5;
+    if z < 50 then
+      z := z * z
+    else
+      z := z - 3
+  );
+  x := z + 1;
+  y := z * 2;
+  z := x + y;
+  z := z - x;
+  z := z * y;
+  b := z
+
+

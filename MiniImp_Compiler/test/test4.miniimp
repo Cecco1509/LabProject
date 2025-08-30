@@ -1,0 +1,14 @@
+def main with input a output b as
+  b := 1;
+  c := 0;
+  while a < 0 do (
+    if a < 10 and not not (c < 6) then (
+      b := b * 2;
+      if b < 15 then (
+        b := b - 3
+      )else skip
+    ) else (
+      b := b + 1
+    );
+    b:=5
+  )

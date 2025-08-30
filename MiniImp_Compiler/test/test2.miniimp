@@ -1,0 +1,14 @@
+def main with input x output y as
+  y:=0;
+  while x < 5 do (
+    y := 6;
+    y := 8;
+    y := 6 - x
+  );
+  y:=7;
+  y:=8;
+  if x < 6 then (
+    while x < 5 do (
+      y := 6 + x
+    )
+  )else x:=5

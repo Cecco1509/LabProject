@@ -1,0 +1,10 @@
+def main with input n output res as
+  res := 0;
+  while n < 0 do (
+    if n < 2 then (
+      res := res + n
+    ) else (
+      res := res - n
+    );
+    res:=5
+  )

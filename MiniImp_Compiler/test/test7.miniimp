@@ -1,0 +1,11 @@
+def main with input a output b as
+  b := 1;
+  while a < 0 do (
+    x:=7
+  );
+  x:=6;
+  if x < 5 then (
+    skip
+  )else (
+    x:=6
+  )

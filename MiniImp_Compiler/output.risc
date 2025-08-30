@@ -1,0 +1,4 @@
+main:
+    loadi 10 r2
+    loadi 4 r3
+    store r2 r3

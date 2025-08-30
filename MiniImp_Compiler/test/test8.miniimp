@@ -1,0 +1,16 @@
+def main with input a output b as
+  c := 9;
+  if a < 6 then (
+    x := 5 + c
+  )else (
+    x := c
+  );
+  x:= c + c;
+  while a < 6 do (
+    m := c;
+    n := x + m
+  );
+  v := 5 + x - 5 * c;
+  k := 1 + c + 8 * v;
+  f := 1 + c + 8 * k;
+  b := x

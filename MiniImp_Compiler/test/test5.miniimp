@@ -1,0 +1,9 @@
+def main with input a output b as
+  b := 1;
+  while a < 0 do (
+    x:=7;
+    x:=8
+  );
+  while x < 5 do (
+    x := -5
+  )
