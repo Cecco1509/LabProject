@@ -1,5 +1,6 @@
 (library
- (name MiniFun))
+ (name MiniFun)
+ (modules Ast Interpreter parser Lexer))
 
 (ocamllex lexer)
 

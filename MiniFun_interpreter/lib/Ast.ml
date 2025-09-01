@@ -15,7 +15,6 @@ type term =
   | LetFun of ide * ide * term * term
   | Fun of ide * term
   | FunApp of term * term
-  | RecFunApp of term * term
 ;;
 
 type env = ide -> envT
@@ -28,6 +27,7 @@ and envT =
   | UnBound
 ;;
 
-val emptyenv : ide -> envT
+let emptyenv : ide -> envT = fun _x -> UnBound;;
 
-val eval : term -> int -> string
+let bind (s: env) (x: ide) (v: envT) =
+  function (i: ide) -> if (i = x) then v else (s i);;

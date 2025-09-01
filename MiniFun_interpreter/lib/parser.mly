@@ -1,5 +1,5 @@
 %{
-  open Semantics
+  open Ast
 %}
 
 (* tokens *)
@@ -11,13 +11,13 @@
 %token PLUS MINUS TIMES
 %token LPAREN RPAREN EOF
 
-%type <Semantics.term> trm
-%type <Semantics.term> parterm
-%type <Semantics.term> sterm
-%type <Semantics.term> appterm
+%type <Ast.term> trm
+%type <Ast.term> parterm
+%type <Ast.term> sterm
+%type <Ast.term> appterm
 (* start nontrminal *)
 %start term
-%type <Semantics.term> term
+%type <Ast.term> term
 
 (* precedences *)
 

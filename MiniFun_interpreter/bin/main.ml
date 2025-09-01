@@ -1,3 +1,5 @@
+open MiniFun.Interpreter
+
 let () =
   (* Check if the correct number of arguments is passed *)
   if Array.length Sys.argv <> 2 then
@@ -59,5 +61,5 @@ let () =
   let input_value = int_of_string (read_line ()) in
 
   (* Evaluate the program with the provided input value *)
-  Printf.printf "Output: %s\n" (MiniFun.Semantics.eval term input_value)
+  Printf.printf "Output: %s\n" (Interpreter.eval term input_value)
 ;;
