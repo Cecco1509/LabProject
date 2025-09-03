@@ -1,0 +1,4 @@
+(executable
+ (public_name MiniTyFun_interpreter)
+ (name main)
+ (libraries MiniTyFun))

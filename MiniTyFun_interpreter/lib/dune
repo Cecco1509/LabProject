@@ -1,0 +1,4 @@
+(library
+ (name MiniTyFun)
+ (modules Ast TypeChecker Interpreter)
+ )
