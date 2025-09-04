@@ -8,4 +8,4 @@ def main with input x output y as
     a := temp;
     i := i + 1
   );
-  y := temp
+  y := b

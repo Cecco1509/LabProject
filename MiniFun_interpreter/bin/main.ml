@@ -57,9 +57,8 @@ let () =
   close_in ic;
 
   (* Now we read the integer input from the user via standard input *)
-  Printf.printf "\nEnter an integer: ";
   let input_value = int_of_string (read_line ()) in
 
   (* Evaluate the program with the provided input value *)
-  Printf.printf "Output: %s\n" (Interpreter.eval term input_value)
+  Printf.printf "%s\n" (Interpreter.eval term input_value)
 ;;

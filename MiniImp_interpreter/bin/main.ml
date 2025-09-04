@@ -22,13 +22,12 @@ let () =
   in
 
   (* Now we read the integer input from the user via standard input *)
-  Printf.printf "\nEnter an integer: ";
   let input_value = int_of_string (read_line ()) in
 
   (* Initialize an empty environment *)
 
   (* Evaluate the program with the provided input value *)
   match MiniImp.Semantics.eval_prg program input_value with
-    | Some value -> Printf.printf "Output: %d\n" value
+    | Some value -> Printf.printf "%d\n" value
     | None -> failwith "Program did not return any output value"
 ;;
