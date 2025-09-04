@@ -78,7 +78,6 @@ let eval_prg (p: prog) (input: int) : int option =
   match p with
   | Main (x, y, c) -> 
     bind x input;
-    bind y 0;
     eval_command c;
     lookup y
   ;;
