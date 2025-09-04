@@ -7,7 +7,7 @@ module Liveness = struct
   (* Type for variable mapping to registers *)
   module RegisterSet = Set.Make(Int)
 
-  (* In and Out names *)
+  (* In and Out registers *)
   let in_var = 0 ;;
   let out_var = 1 ;;
                      (*    in              used         defined     out *)
@@ -18,6 +18,7 @@ module Liveness = struct
     instr_level_analysis : (string * int, block_state) Hashtbl.t;
   }
 
+  (* Compute the used & defined variables in an MiniRisc instruction *)
   let compute_instr_used_vars (instr : MiniRiscAst.instruction) (def_vars : RegisterSet.t) (used_vars : RegisterSet.t) : (RegisterSet.t * RegisterSet.t) =
     match instr with
       | Load (src1, src2) -> let used = if RegisterSet.mem src1 def_vars then used_vars else RegisterSet.add src1 used_vars in
@@ -40,28 +41,40 @@ module Liveness = struct
                                 (used, def)
       | _ -> (RegisterSet.empty, RegisterSet.empty)
 
-  (* Compute the used variables in a node *)
+  (* Compute the used & defined variables in a node *)
   let compute_node_used_vars (label : MiniRiscAst.instruction list) : (RegisterSet.t * RegisterSet.t) =
 
-    List.fold_left (fun acc (instr : MiniRiscAst.instruction) ->
-      let (used_vars, def_vars) = acc in
-      let (used', def') = compute_instr_used_vars instr def_vars used_vars in
-      (RegisterSet.union used_vars used', RegisterSet.union def_vars def')
+    List.fold_left (
+      fun acc (instr : MiniRiscAst.instruction) ->
+        let (used_vars, def_vars) = acc in
+        let (used', def') = compute_instr_used_vars instr def_vars used_vars in
+        (RegisterSet.union used_vars used', RegisterSet.union def_vars def')
     ) (RegisterSet.empty, RegisterSet.empty) label
   ;;
 
   let _is_temp_registers (reg : int) : bool = reg == 2 || reg == 3 
 
+  (************************ Initialize the state for a node in the CFG ************************)
+  (* Returns a block_state containing:
+   * - used variables
+   * - defined variables
+   * - liveness_in  (initially empty)
+   * - liveness_out (initially empty)
+   *)
   let start_state (is_initial : bool) (label : MiniRiscAst.instruction list) : block_state =
     let (used_vars, def_vars) = compute_node_used_vars label in
     let final_def_vars = if is_initial then RegisterSet.add 0 def_vars else def_vars in
     (RegisterSet.empty, used_vars, final_def_vars, RegisterSet.empty)
   ;;
 
-  (* Initialize the state for each node in the CFG *)
+  (************************ Initialize the state for each node in the CFG **********************)
   let init_state (cfg : ControlFlowGraph.cfg) (mini_risc_tr : MiniRiscCfg.result) : (string, block_state) Hashtbl.t =
     let state = Hashtbl.create (List.length cfg.nodes) in
-    List.iter (fun (node: ControlFlowGraph.node) -> Hashtbl.add state node.id (start_state (node.id == cfg.i.id) (Hashtbl.find mini_risc_tr.translation node.id))) cfg.nodes;
+    List.iter (
+      fun (node: ControlFlowGraph.node) ->
+        let node_start_state = start_state (node.id == cfg.i.id) (Hashtbl.find mini_risc_tr.translation node.id) in
+        Hashtbl.add state node.id node_start_state
+    ) cfg.nodes;
     state
   ;;
 
@@ -100,12 +113,12 @@ module Liveness = struct
   ;;
 
 
+  (* Find the fixpoint of the liveness analysis *)
   let rec find_fixpoint (g_state : (string, block_state) Hashtbl.t) (cfg : ControlFlowGraph.cfg) : unit =
     let update = ref false
     in
     (* Iterate over each node in the CFG *)
     List.iter (fun (node: ControlFlowGraph.node) ->
-
       let res = Hashtbl.find_opt g_state node.id in
       match res with
       | None -> failwith ("Node " ^ node.id ^ " not found in global state")
@@ -118,12 +131,8 @@ module Liveness = struct
           update := true
         )
       )
-    ) cfg.nodes;
-
-    (* print_current_state g_state; *)
-
-    (* wait for user input *)
-    (* ignore (read_line ()); *)
+    ) (List.rev cfg.nodes);
+    (* Done backward for performance reasons *)
 
     if !update then find_fixpoint g_state cfg
     else ()
@@ -142,13 +151,29 @@ module Liveness = struct
     let instruction_level_liveness = Hashtbl.create (List.length cfg.nodes) in
     List.iter (fun (node: ControlFlowGraph.node) ->
       let (_, _, _, out_vars) = Hashtbl.find global_state (node.id) in
-      (* For each instruction in the node, compute its liveness *)
+
+      (* If block contains more than one instruction compute the liveness at instruction level *)
       if List.length (Hashtbl.find mini_risc_tr.translation node.id) > 1 then begin
 
         let idx = ref (List.length (Hashtbl.find mini_risc_tr.translation node.id) - 1) in
 
+        (* Here begins the Liveness Analysis at instruction level
+          WHY is it needed? -> Needed for a better contruction of the Interference Graph
+
+          WHY it is done here? -> Because this computation doesn't affect the bigger block state
+                                  so it is useless to do for each iteration of the fixpoint
+
+          HOW it is done? -> Starting from the last block instruction, the live_in is computed by
+                             using the live_out of the previous instruction (or the block one for the last instruction)
+                             and the used/defined registers in the current instruction
+
+          Further implementation notes:
+            - This computation is done twice, ones at the init phase and once here after the fixpoint
+            - At init phase we care only about the maximal block liveness
+        *)
         ignore (
           List.fold_left (fun acc instr ->
+            (* Compute the registers used and the defined one in the current instruction *)
             let (used, def) = compute_instr_used_vars instr RegisterSet.empty RegisterSet.empty in
 
             let live_in = RegisterSet.union used (RegisterSet.diff acc def) in
