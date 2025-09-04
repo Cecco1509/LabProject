@@ -37,10 +37,10 @@ type envT =
 ;;
 
 (* Empty env for type checking *)
-let emptycxt : ty env = function _x -> UnBound;;
+let emptycxt : (ty env) = function _x -> UnBound;;
 
 (* Empty env for term evaluation*)
-let emptyenv : (ide -> envT) = function _x -> UnBound;;
+let emptyenv : (envT env) = function _x -> UnBound;;
 
 
 let bind (s: 'a env) (x: ide) (v: 'a) =

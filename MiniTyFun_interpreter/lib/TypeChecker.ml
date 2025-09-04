@@ -10,12 +10,7 @@ module TypeChecker = struct
       | UnBound -> None
       | t -> Some(t)
       )
-    | Plus (t1, t2) | Times (t1, t2) -> (
-      match (check_type e t1, check_type e t2) with
-        | (Some(TInt), Some(TInt)) -> Some(TInt)
-        | _ -> None
-      )
-    | Minus (t1, t2) -> (
+    | Plus (t1, t2) | Times (t1, t2) | Minus (t1, t2) -> (
       match (check_type e t1, check_type e t2) with
         | (Some(TInt), Some(TInt)) -> Some(TInt)
         | _ -> None
@@ -63,9 +58,9 @@ module TypeChecker = struct
         )
     | FunApp (t1, t2) -> (
       match check_type e t1 with
-        | Some(TFunctional(ty, ty1)) -> (
-              match check_type e t2 with 
-                | Some(ty') when ty = ty' -> Some(ty1)
+        | Some(TFunctional(ty, ty')) -> (
+              match check_type e t2 with
+                | Some(ty'') when ty = ty'' -> Some(ty')
                 | _ -> None
         )
         | _ -> None
