@@ -24,8 +24,6 @@ and c =
 ;;
 
 (* Ambiente/Memoria *)
-type env = var -> int option;;
-
 let hash_env = Hashtbl.create 16;;
 
 (*
