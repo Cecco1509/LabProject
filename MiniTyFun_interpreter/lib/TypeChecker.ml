@@ -48,7 +48,7 @@ module TypeChecker = struct
       )
     | LetFun (f, x, ty, t1, t2) -> (
         match ty with
-          | TRecFunctional(ty', ty'') -> (
+          | TFunctional(ty', ty'') -> (
             let e': ty env = bind e f ty in
             match (check_type (bind e' x ty') t1) with
               | Some(result_type) when result_type = ty'' -> check_type e' t2
@@ -63,7 +63,7 @@ module TypeChecker = struct
         )
     | FunApp (t1, t2) -> (
       match check_type e t1 with
-        | Some(TFunctional(ty, ty1)) | Some TRecFunctional(ty, ty1) -> (
+        | Some(TFunctional(ty, ty1)) -> (
               match check_type e t2 with 
                 | Some(ty') when ty = ty' -> Some(ty1)
                 | _ -> None
@@ -78,7 +78,6 @@ module TypeChecker = struct
     | TInt -> x^":TInt"
     | TBool -> x^":TBool"
     | TFunctional (in_ty, out_ty) -> x^":Function " ^ (type_to_string (Some in_ty)) ^ " -> " ^ (type_to_string (Some out_ty)) ^ ")"
-    | TRecFunctional (in_ty, out_ty) -> x^":RecFunction " ^ (type_to_string (Some in_ty)) ^ " -> " ^ (type_to_string (Some out_ty)) ^ ")"
     | UnBound -> x^":Variable not found"
   ;;
 

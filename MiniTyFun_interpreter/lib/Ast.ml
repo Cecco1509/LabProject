@@ -4,7 +4,6 @@ type ty =
   | TInt
   | TBool
   | TFunctional of ty * ty
-  | TRecFunctional of ty * ty
   | UnBound
 ;;
 

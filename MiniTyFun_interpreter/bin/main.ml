@@ -42,7 +42,7 @@ let () =
   Printf.printf "Test 7 - Function definition and application: Expected: TInt, Result: %s\n" (type_to_string v7);
 
   (* Test 8 - Recursive function application *)
-  let t8 = LetFun ("factorial", "n", TRecFunctional (TInt, TInt),
+  let t8 = LetFun ("factorial", "n", TFunctional (TInt, TInt),
                    IfThenElse (Less (Var "n", TNum 2), TNum 1,
                                Times (Var "n", FunApp (Var "factorial", Minus (Var "n", TNum 1)))),
                    FunApp (Var "factorial", TNum 5)) in
@@ -55,7 +55,7 @@ let () =
   Printf.printf "Test 9 - Arithmetic operation with type error: Expected: Exception, Result: %s\n" (type_to_string v9);
 
   (* Test 10 - Complex nested Let and FunApp *)
-  let t10 = LetFun ("fib", "n", TRecFunctional (TInt, TInt),
+  let t10 = LetFun ("fib", "n", TFunctional (TInt, TInt),
                     IfThenElse (Less (Var "n", TNum 2), Var "n",
                                 Plus (FunApp (Var "fib", Minus (Var "n", TNum 1)),
                                       FunApp (Var "fib", Minus (Var "n", TNum 2)))),
@@ -74,7 +74,7 @@ let () =
   Printf.printf "Test 11 - Nested functions: Expected: TInt, Result: %s\n" (type_to_string v11);
 
   (* Test 12 - Higher-order function *)
-  let t12 = LetFun ("apply_twice", "f", TRecFunctional (TFunctional (TInt, TInt), TFunctional (TInt, TInt)),
+  let t12 = LetFun ("apply_twice", "f", TFunctional (TFunctional (TInt, TInt), TFunctional (TInt, TInt)),
                     Fun ("x", TInt, FunApp (Var "f", FunApp (Var "f", Var "x"))),
                     Let ("double", Fun ("y", TInt, Times (Var "y", TNum 2)),
                         FunApp (FunApp (Var "apply_twice", Var "double"), TNum 3))) in
@@ -120,9 +120,8 @@ let () =
   let v16 = TypeChecker.check_type emptycxt t16 in
   Printf.printf "Test 16 - Deep nested conditional expressions: Expected: TInt, Result: %s\n" (type_to_string v16);
 
-  (* REWRITE THIS TEST CASE *)
   (* Test 17 - Self-applying function *)
-  let t17 = LetFun ("self_apply", "f", TRecFunctional (TFunctional (TInt, TInt), TInt),
+  let t17 = LetFun ("self_apply", "f", TFunctional (TFunctional (TInt, TInt), TInt),
                 FunApp (Var "f", TNum 5),
                 FunApp (Var "self_apply", Fun ("x", TInt, Plus (Var "x",  TNum 5)))) in
   let v17 = TypeChecker.check_type emptycxt t17 in
@@ -176,7 +175,7 @@ let () =
   Printf.printf "Test 21 - Multiple levels of nested Let expressions: Expected: TInt, Result: %s\n" (type_to_string v21);
 
   (* Test 22 - Complex recursive function with branching *)
-  let t22 = LetFun ("complex_rec", "n", TRecFunctional (TInt, TInt),
+  let t22 = LetFun ("complex_rec", "n", TFunctional (TInt, TInt),
                 IfThenElse (Less (Var "n", TNum 0), TNum 0,
                 IfThenElse (Less (Var "n", TNum 2), TNum 1,
                   IfThenElse (And (Less (TNum 1, Var "n"), Less (Var "n", TNum 5)),
@@ -189,7 +188,7 @@ let () =
   Printf.printf "Test 22 - Complex recursive function with branching: Expected: TInt, Result: %s\n" (type_to_string v22);
 
   (* Test 23 - Higher-order function simulation of map *)
-  let t23 = LetFun ("map", "f", TRecFunctional (TFunctional (TInt, TInt), TFunctional (TInt, TFunctional (TInt, TInt))),
+  let t23 = LetFun ("map", "f", TFunctional (TFunctional (TInt, TInt), TFunctional (TInt, TFunctional (TInt, TInt))),
                 Fun ("start", TInt, 
                 Fun ("end", TInt,
                   IfThenElse (Less (Var "end", Var "start"), TNum 0,
@@ -218,14 +217,14 @@ let () =
 
   (* Test 25 - Recursive composed functions *)
   let t25 = 
-    LetFun ("factorial", "n", TRecFunctional (TInt, TInt),
+    LetFun ("factorial", "n", TFunctional (TInt, TInt),
            IfThenElse (Less (Var "n", TNum 2), TNum 1, 
                      Times (Var "n", FunApp (Var "factorial", Minus (Var "n", TNum 1)))),
            Let ("double", Fun ("x", TInt, Times (Var "x", TNum 2)),
-                LetFun ("compose_rec", "f", TRecFunctional (TFunctional (TInt, TInt), 
-                                      TFunctional (TRecFunctional (TInt, TInt),
+                LetFun ("compose_rec", "f", TFunctional (TFunctional (TInt, TInt), 
+                                      TFunctional (TFunctional (TInt, TInt),
                                         TFunctional (TInt, TInt))),
-                      Fun ("g", TRecFunctional (TInt, TInt),
+                      Fun ("g", TFunctional (TInt, TInt),
                         Fun ("n", TInt,
                           IfThenElse (Less (Var "n", TNum 1),
                             FunApp (Var "f", FunApp (Var "g", TNum 1)),

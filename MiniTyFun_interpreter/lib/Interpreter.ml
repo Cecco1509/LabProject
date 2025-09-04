@@ -23,7 +23,7 @@ module Interpreter = struct
       )
     | LetFun (f, x, ty, t1, t2) -> (
       match ty with
-      | TRecFunctional(ty', ty'') -> (
+      | TFunctional(ty', ty'') -> (
         let ty_e' = bind ty_e f ty in
         match TypeChecker.check_type (bind ty_e' x ty') t1 with
         | Some(result_type) when result_type = ty'' -> eval (bind e f (RecClosure(f, x, ty, t1, e, (bind ty_e' x ty')))) ty_e' t2
@@ -44,17 +44,11 @@ module Interpreter = struct
               let ty_e'' = bind ty_e' x ty in
               let e''    = bind e' x t2' in
               eval e'' ty_e'' t
-            | _ -> failwith "FunApp Type error"
-        )
-        | (Some(TRecFunctional(param_type, ty'')), Some(ty')) when param_type = ty' -> (
-          let t1' = eval e ty_e t1 in
-          let t2' = eval e ty_e t2 in
-           match t1' with
             | RecClosure (fn, x, fn_type, t, e', ty_e') ->
-              let ty_e'' = bind (bind ty_e' fn (TRecFunctional(param_type, ty''))) x param_type in
+              let ty_e'' = bind (bind ty_e' fn fn_type) x ty in
               let e' = bind (bind e' fn (RecClosure(fn, x, fn_type, t, e', ty_e'))) x t2' in
               eval e' ty_e'' t
-            | _ -> failwith "RecFunApp Type error"
+            | _ -> failwith "FunApp Type error"
         )
         | _ -> failwith "Function application type error"
     )
