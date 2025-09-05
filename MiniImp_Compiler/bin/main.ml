@@ -33,15 +33,12 @@ let () =
       exit 1
   in
 
-  Printf.printf "Program parsed successfully\n";
-
   let ( in_var, out_var, body) = match program with
     | Main (in_var, out_var, body) -> (in_var, out_var, body)
   in
 
   let cfg = ControlFlowGraph.build_cfg body in
 
-  Printf.printf "Control Flow Graph built\n";
   (* -D flag Check defined variables *)
   if def_vars_flag then (
     DefinedVars.analyze_defined_vars cfg in_var;
@@ -49,7 +46,6 @@ let () =
   );
 
   let translation_result = MiniRiscCfg.translate cfg in_var out_var in
-  Printf.printf "Translation to MiniRISC IR done\n";
 
   (* -O optimization flag*)
   if opt_flag then
