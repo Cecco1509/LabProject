@@ -274,24 +274,59 @@ module MiniRiscCfg = struct
           | LoadI (n, r) when r = reg ->
               (LoadI (n, 2) :: LoadI (r, 3) :: Store(2, 3) :: acc)
 
+          (* case: the first operand spills *)
           | Brop (op, r1, r2, r3) when r1 = reg ->
               let temp_reg = if r2 = 3 then 2 else 3 in
-              (LoadI (reg, temp_reg) :: Load (temp_reg, temp_reg) :: Brop (op, temp_reg, r2, r3) :: acc)
+              let store_reg = if temp_reg = 2 then 3 else 2 in
+              
+              let first_spill_instr = [LoadI (reg, temp_reg); Load (temp_reg, temp_reg)] (*:: Brop (op, temp_reg, r2, r3) :: acc) *) in
+              let second_is_spilling = r2 = reg in
+              let third_is_spilling = r3 = reg in
+
+              (* case brop rSpill rSpill rx *)
+              if second_is_spilling && not third_is_spilling then first_spill_instr @ [Brop (op, temp_reg, temp_reg, r3)] @ acc
+              (* case brop rSpill rx rSpill *)
+              else if third_is_spilling && not second_is_spilling then first_spill_instr @ [Brop (op, temp_reg, r2, temp_reg); LoadI (r3, store_reg); Store(temp_reg, store_reg)] @ acc
+              (* case brop rSpill rSpill rSpill *)
+              else if second_is_spilling && third_is_spilling then first_spill_instr @ [Brop (op, temp_reg, temp_reg, temp_reg); LoadI (r3, store_reg); Store(temp_reg, store_reg)] @ acc
+              else first_spill_instr @ [Brop (op, temp_reg, r2, r3)] @ acc
+          (* case: the second operand spills *)
           | Brop (op, r1, r2, r3) when r2 = reg ->
               let temp_reg = if r1 = 3 then 2 else 3 in
-              (LoadI (reg, temp_reg) :: Load (temp_reg, temp_reg) :: Brop (op, r1, temp_reg, r3) :: acc)
+              let store_reg = if temp_reg = 2 then 3 else 2 in
+              
+              (* Load spilled register from memory instructions *)
+              let first_spill_instr = [LoadI (reg, temp_reg); Load (temp_reg, temp_reg)] (*:: Brop (op, temp_reg, r2, r3) :: acc) *) in
+              let third_is_spilling = r3 = reg in
+
+              (* case brop rx rSpill rSpill *)
+              if third_is_spilling then first_spill_instr @ [Brop (op, r1, temp_reg, temp_reg); LoadI (r3, store_reg); Store(temp_reg, store_reg)] @ acc
+              else first_spill_instr @ [Brop (op, r1, temp_reg, r3)] @ acc
+          (* case: the destination spills *)
           | Brop (op, r1, r2, r3) when r3 = reg ->
               (Brop (op, r1, r2, 2) :: LoadI (r3, 3) :: Store(2, 3) :: acc)
-
-
+          
+          (* case: the first operand spills *)
           | Biop (op, r1, n, r3) when r1 = reg ->
-              (LoadI (reg, 2) :: Load (2, 2) :: Biop (op, 2, n, r3) :: acc)
+              let third_is_spilling = r3 = reg in
+
+              if third_is_spilling then
+                (LoadI (reg, 2) :: Load (2, 2) :: Biop (op, 2, n, 2) :: LoadI (r3, 3) :: Store(2, 3) :: acc)
+              else
+                (LoadI (reg, 2) :: Load (2, 2) :: Biop (op, 2, n, r3) :: acc)
+          (* case: the destination spills *)
           | Biop (op, r1, n, r3) when r3 = reg ->
               (Biop (op, r1, n, 2) :: LoadI (r3, 3) :: Store(2, 3) :: acc)
 
-
+          (* case: the first operand spills *)
           | Urop (op, r1, r2) when r1 = reg ->
+            let second_is_spilling = r2 = reg in
+
+            if second_is_spilling then
+              (LoadI (reg, 2) :: Load (2, 2) :: Urop (op, 2, 2) :: LoadI (r2, 3) :: Store(2, 3) :: acc)
+            else
               (LoadI (reg, 2) :: Load (2, 2) :: Urop (op, 2, r2) :: acc)
+              
           | Urop (op, r1, r2) when r2 = reg ->
               (Urop (op, r1, 2) :: LoadI (r2, 3) :: Store(2, 3) :: acc)
 
