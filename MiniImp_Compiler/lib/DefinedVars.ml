@@ -12,7 +12,7 @@ module DefinedVars = struct
   (* variable for storing input variable name *)
   let in_var = ref "in" ;;
 
-  (* Block state                   *)
+  (* Block state: (in_set, defined_vars_list, out_set) *)
   type block_state = VariableSet.t * def_vars * VariableSet.t;;
 
   (* Compute the defined variables in a node *)
@@ -27,10 +27,12 @@ module DefinedVars = struct
     vars
   ;;
 
+  (* Create the starting block state for a node given the global T set *)
   let start_state (node : ControlFlowGraph.node) (t : VariableSet.t) : block_state = 
     (t , compute_node_def_vars node, t)
   ;;
 
+  (* Compute the global set T of variables that may be defined in the CFG *)
   let compute_T (nodes : ControlFlowGraph.node list) : VariableSet.t =
     List.fold_left (
       fun acc node ->
@@ -48,10 +50,12 @@ module DefinedVars = struct
     state
   ;;
 
+  (******** determine whether a use refers to a prior definition ***********************)
   let check_in_block_def (var : string) (def_vars : def_vars) (max_line : int) : bool =
     List.exists (fun (x, i) -> x = var && i <= max_line) def_vars
   ;;
 
+  (************ Check arithmetic expressions for defined variables ************)
   let rec check_aexp_defined_vars (exp : aexp) (in_vars : VariableSet.t) (def_vars : def_vars) (i : int) : unit =
     match exp with
     | Num _ -> ()
@@ -63,6 +67,7 @@ module DefinedVars = struct
     | Times (a1, a2) -> check_aexp_defined_vars a1 in_vars def_vars i; check_aexp_defined_vars a2 in_vars def_vars i
   ;;
 
+  (************ Check boolean expressions for defined variables ************)
   let rec check_bexp_defined_vars (exp : bexp) (in_vars : VariableSet.t) (def_vars : def_vars) (i : int) : unit =
     match exp with
     | Bool _ -> ()
@@ -71,6 +76,7 @@ module DefinedVars = struct
     | Less (a1, a2) -> check_aexp_defined_vars a1 in_vars def_vars i; check_aexp_defined_vars a2 in_vars def_vars i
   ;;
 
+    (************ Check instruction for defined variables *****************)
   let check_undef_block_vars (node : ControlFlowGraph.node) (in_vars : VariableSet.t) (def_vars : def_vars) : unit =
     let i = ref 0 in
     List.iter (fun (command : ControlFlowGraph.command) ->
@@ -82,6 +88,7 @@ module DefinedVars = struct
     ) node.command
     ;;
 
+  (******************* Compute incoming variables set ********************)
   (* dv_in(L) ∪ {variables defined in L } *)
   let compute_incoming_vars (node : ControlFlowGraph.node) ( state : (string, block_state) Hashtbl.t ) (cfg : ControlFlowGraph.cfg) : VariableSet.t =
 
@@ -103,7 +110,7 @@ module DefinedVars = struct
       ) VariableSet.empty (ControlFlowGraph.get_in_nodes node cfg)
   ;;
 
-
+  (******************* Compute outgoing variables set ********************)
   (* dv_in(L) ∪ {variables defined in L } *)
   let compute_outgoing_vars (node : ControlFlowGraph.node) ( state : (string, block_state) Hashtbl.t ) (_cfg : ControlFlowGraph.cfg) : VariableSet.t =
     let (in_vars, def_vars, _) = Hashtbl.find state node.id in
@@ -112,7 +119,7 @@ module DefinedVars = struct
     VariableSet.union in_vars (VariableSet.of_list (List.map fst def_vars))
   ;;
 
-  (* Print the current state for debugging purposes *)
+  (*********************** Print the current state *****************************)
   let print_current_state (global_state : (string, block_state) Hashtbl.t) : unit =
     Hashtbl.iter (fun block_id (in_vars, def_vars, out_vars) ->
       Printf.printf "Block %s:\n" block_id;
@@ -122,7 +129,7 @@ module DefinedVars = struct
     ) global_state;
   ;;
 
-
+  (******************** find maximal fixpoint ************************************)
   let rec find_fixpoint (g_state : (string, block_state) Hashtbl.t) (cfg : ControlFlowGraph.cfg) : unit =
     let update = ref false
     in 
@@ -149,7 +156,7 @@ module DefinedVars = struct
     else ()
   ;;
 
-  (* Check for undefined variables in the global state *)
+  (************** Check for undefined variables after fixpoint is reached **********************)
   let check_undef_vars (global_state : (string, block_state) Hashtbl.t) (cfg : ControlFlowGraph.cfg) : unit =
     List.iter (fun (node: ControlFlowGraph.node) ->
       let (in_vars, def_vars, _) = Hashtbl.find global_state node.id in
@@ -159,7 +166,8 @@ module DefinedVars = struct
     ) cfg.nodes
   ;;
 
-  (* Analyze the defined variables in the CFG *)
+  (****************** Analyze defined variables in the CFG ************************)
+  (* Starting point of the analysis *)
   let analyze_defined_vars (cfg : ControlFlowGraph.cfg) (in_name : string) : unit =
 
     in_var := in_name;

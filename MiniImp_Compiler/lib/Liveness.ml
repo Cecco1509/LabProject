@@ -18,7 +18,7 @@ module Liveness = struct
     instr_level_analysis : (string * int, block_state) Hashtbl.t;
   }
 
-  (* Compute the used & defined variables in an MiniRisc instruction *)
+  (******************* Compute the used & defined variables in an MiniRisc instruction *********************)
   let compute_instr_used_vars (instr : MiniRiscAst.instruction) (def_vars : RegisterSet.t) (used_vars : RegisterSet.t) : (RegisterSet.t * RegisterSet.t) =
     match instr with
       | Load (src1, src2) -> let used = if RegisterSet.mem src1 def_vars then used_vars else RegisterSet.add src1 used_vars in
@@ -41,7 +41,7 @@ module Liveness = struct
                                 (used, def)
       | _ -> (RegisterSet.empty, RegisterSet.empty)
 
-  (* Compute the used & defined variables in a node *)
+  (******************** Compute the used & defined variables in a node *****************************)
   let compute_node_used_vars (label : MiniRiscAst.instruction list) : (RegisterSet.t * RegisterSet.t) =
 
     List.fold_left (
@@ -51,8 +51,6 @@ module Liveness = struct
         (RegisterSet.union used_vars used', RegisterSet.union def_vars def')
     ) (RegisterSet.empty, RegisterSet.empty) label
   ;;
-
-  let _is_temp_registers (reg : int) : bool = reg == 2 || reg == 3 
 
   (************************ Initialize the state for a node in the CFG ************************)
   (* Returns a block_state containing:
@@ -78,7 +76,7 @@ module Liveness = struct
     state
   ;;
 
-
+  (******************* Compute incoming register set ********************)
   (* {r used in L}∪(lvout (L)\{r defined in L}) *)
   let compute_incoming_vars (node : ControlFlowGraph.node) ( state : (string, block_state) Hashtbl.t ) (_cfg : ControlFlowGraph.cfg) : RegisterSet.t =
 
@@ -88,6 +86,7 @@ module Liveness = struct
   ;;
 
 
+  (******************* Compute outgoing register set ********************)
   (* ⋃(L,L′)∈CFG edges dvin(L′) *)
   let compute_outgoing_vars (node : ControlFlowGraph.node) ( state : (string, block_state) Hashtbl.t ) (cfg : ControlFlowGraph.cfg) : RegisterSet.t =
     if node.id = cfg.f.id then
@@ -101,7 +100,7 @@ module Liveness = struct
       ) RegisterSet.empty outgoing_nodes
   ;;
 
-  (* Print the current state for debugging purposes *)
+  (**************************** Print the current state *******************************)
   let print_current_state (global_state : (string, block_state) Hashtbl.t) : unit =
     Hashtbl.iter (fun block_id (in_vars, used_vars, def_vars, out_vars) ->
       Printf.printf "Block %s:\n" block_id;
@@ -113,7 +112,7 @@ module Liveness = struct
   ;;
 
 
-  (* Find the fixpoint of the liveness analysis *)
+  (*********************** Find the fixpoint of the liveness analysis *******************)
   let rec find_fixpoint (g_state : (string, block_state) Hashtbl.t) (cfg : ControlFlowGraph.cfg) : unit =
     let update = ref false
     in
@@ -138,7 +137,8 @@ module Liveness = struct
     else ()
   ;;
 
-  (* Analyze the defined variables in the CFG *)
+  (************************* Analyze the defined variables in the CFG *************************)
+  (* Starting point of the analysis *)
   let compute_vars_liveness (cfg : ControlFlowGraph.cfg) (mini_risc_tr : MiniRiscCfg.result)  : liveness_result =
 
     (* Init global state *)

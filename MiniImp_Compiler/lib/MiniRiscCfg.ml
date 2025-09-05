@@ -17,7 +17,7 @@ module MiniRiscCfg = struct
   let in_var = ref "in" ;;
   let out_var = ref "out" ;;
 
-  (* Initialize table for variables to registers mapping *)
+  (********** Initialize table for variables to registers mapping *************)
   let init_var_set () : variable_map =
     let var_map = Hashtbl.create 10 in
     Hashtbl.add var_map !in_var 0;
@@ -26,12 +26,12 @@ module MiniRiscCfg = struct
   ;;
 
   (*
+    Register allocation convention:
     0 : input
     1 : output
     2 : temporary register A
     3 : temporary register B
     4, 5, ... : additional registers
-
   *)
   let register_count = ref 4;;
 
@@ -42,7 +42,7 @@ module MiniRiscCfg = struct
     reg
   ;;
 
-  (* Translate an arithmetic expression into MiniRisc instructions *)
+  (******************** arithmetic expression translation ***********************)
   let rec translate_aexp (exp : aexp) (var_map : variable_map) (dest_reg : int) : instruction list =
     match exp with
     | Num n -> [LoadI (n, dest_reg)]  (* Load immediate value into register *)
@@ -55,38 +55,35 @@ module MiniRiscCfg = struct
     | Plus (aexp, Var v) | Plus (Var v, aexp) ->
       (translate_aexp aexp var_map dest_reg) @ [Brop (Add, dest_reg, Hashtbl.find var_map v, dest_reg)]  (* Add register to variable *)
     | Plus (a1, a2) ->
-      (*
-        Creates two new temporary registers for the expression
-      *)
+
+      (* Creates one new temporary register for the expression *)
       let temp_reg = new_register () in
       translate_aexp a1 var_map dest_reg @
       translate_aexp a2 var_map temp_reg @
-      [Brop (Add, dest_reg, temp_reg, dest_reg)]  (* Sub two registers and store result in dest_reg *)
+      [Brop (Add, dest_reg, temp_reg, dest_reg)]  (* Add two registers and store result in dest_reg *)
     (* Minus *)
     | Minus (Num n, Var v) -> 
       [LoadI (n, dest_reg)] @
-      [Brop (Sub, dest_reg, Hashtbl.find var_map v, dest_reg)]  (* Subtract immediate value from variable *)
-    | Minus (Var v, Num n) -> [Biop (SubI, Hashtbl.find var_map v, n, dest_reg)]  (* Subtract immediate value from variable *)
+      [Brop (Sub, dest_reg, Hashtbl.find var_map v, dest_reg)]  (* Subtract variable from immediate *)
+    | Minus (Var v, Num n) -> [Biop (SubI, Hashtbl.find var_map v, n, dest_reg)]  (* Subtract immediate from variable *)
     | Minus (Var v, Var v2) -> [Brop (Sub, Hashtbl.find var_map v, Hashtbl.find var_map v2, dest_reg)]  (* Subtract two variables *)
     | Minus (aexp, Num n) ->
-      (translate_aexp aexp var_map dest_reg) @ [Biop (SubI, dest_reg, n, dest_reg)]  (* Subtract immediate value from register *)
+      (translate_aexp aexp var_map dest_reg) @ [Biop (SubI, dest_reg, n, dest_reg)]  (* Subtract immediate from register *)
     | Minus (Var v, aexp) ->
-      (translate_aexp aexp var_map dest_reg) @ [Brop (Sub, dest_reg, Hashtbl.find var_map v, dest_reg)]  (* Add register to variable *)
+      (translate_aexp aexp var_map dest_reg) @ [Brop (Sub, dest_reg, Hashtbl.find var_map v, dest_reg)]  (* Subtract expression from variable *)
     | Minus (a1, a2) ->
-
       let temp_reg = new_register () in
       translate_aexp a1 var_map dest_reg @
       translate_aexp a2 var_map temp_reg @
-      [Brop (Sub, dest_reg, temp_reg, dest_reg)]  (* Sub two registers and store result in dest_reg *)
-
-    | Times (Num n, Var v) | Times (Var v, Num n) -> [Biop (MultI, Hashtbl.find var_map v, n, dest_reg)]  (* Multtiply immediate value with variable *)
-    | Times (Var v, Var v2) -> [Brop (Mult, Hashtbl.find var_map v, Hashtbl.find var_map v2, dest_reg)]  (* Multtiply two variables *)
+      [Brop (Sub, dest_reg, temp_reg, dest_reg)]  (* Subtract two registers and store result in dest_reg *)
+    (* Times *)
+    | Times (Num n, Var v) | Times (Var v, Num n) -> [Biop (MultI, Hashtbl.find var_map v, n, dest_reg)]  (* Multiply immediate with variable *)
+    | Times (Var v, Var v2) -> [Brop (Mult, Hashtbl.find var_map v, Hashtbl.find var_map v2, dest_reg)]  (* Multiply two variables *)
     | Times (Num n, aexp) | Times (aexp, Num n) ->
-      (translate_aexp aexp var_map dest_reg) @ [Biop (MultI, dest_reg, n, dest_reg)]  (* Multiply immediate value with register *)
+      (translate_aexp aexp var_map dest_reg) @ [Biop (MultI, dest_reg, n, dest_reg)]  (* Multiply immediate with register *)
     | Times (aexp, Var v) | Times (Var v, aexp) ->
-      (translate_aexp aexp var_map dest_reg) @ [Brop (Mult, dest_reg, Hashtbl.find var_map v, dest_reg)]  (* Multiply register to variable *)
+      (translate_aexp aexp var_map dest_reg) @ [Brop (Mult, dest_reg, Hashtbl.find var_map v, dest_reg)]  (* Multiply register with variable *)
     | Times (a1, a2) ->
-
       let temp_reg = new_register () in
       translate_aexp a1 var_map dest_reg @
       translate_aexp a2 var_map temp_reg @
@@ -138,6 +135,7 @@ module MiniRiscCfg = struct
       [Brop (Less, dest_reg, temp_reg, dest_reg)]  (* Compare two registers and store result in dest_reg *)
   ;;
 
+  (**************** Translate a single MiniImp command to MiniRisc instructions *********************)
   let translate_code (var_map : variable_map) (command : ControlFlowGraph.command) : instruction list =
     match command with
     | Skip -> [Nop]
@@ -159,35 +157,31 @@ module MiniRiscCfg = struct
             Hashtbl.add var_map var new_reg;
             new_reg
         in
-
       (* Translate the arithmetic expression to MiniRisc instructions *)
       translate_aexp aexp var_map reg
-
     | If (bexp) | While (bexp) ->
       (* Always put the condition result inside the register 2 *)
       (* This operation is safe because the condition is always the only operation in the block or the last one *)
       translate_bexp bexp var_map 2
     ;;
 
+  (* Translate a CFG node to a labeled instruction sequence *)
   let translate_node (var_map : variable_map) (node : ControlFlowGraph.node) : label =
-
     let label_id = node.id in
     let translated_code = List.map (translate_code var_map) node.command in
-
     (* Flatten the list of instructions *)
     let instruction_list = List.flatten translated_code in
-
     (* Create a label for the node *)
     Label (label_id, instruction_list)
   ;;
 
-  (* Build MiniRisc CFG from MiniImp CFG *)
+  (************************ Build MiniRisc CFG from MiniImp CFG **************************)
+  (* Starting point of the translation process *)
   let translate (cfg : ControlFlowGraph.cfg) (input : string) (output : string) : result =
     in_var := input;
     out_var := output;
 
     let var_map = init_var_set () in
-
     let translated_nodes : label list = List.map (translate_node var_map) cfg.nodes in
 
     let translation_map = Hashtbl.create (List.length translated_nodes) in
@@ -217,6 +211,7 @@ module MiniRiscCfg = struct
     Buffer.contents buf
   ;;
 
+  (* Print the MiniRisc CFG for debugging *)
   let print_mini_risc_cfg (cfg : ControlFlowGraph.cfg) (translation_map : (string, instruction list) Hashtbl.t) : unit =
     Printf.printf "MiniRisc CFG:\n";
     Printf.printf "Entry: %s\n" cfg.i.id;
@@ -229,6 +224,7 @@ module MiniRiscCfg = struct
     List.iter (fun ((src, dst) : (string * string)) -> Printf.printf "  %s -> %s\n" src dst) cfg.edges;
   ;;
 
+  (**************** Compute spill cost for each register based on instruction frequency ************************)
   let compute_spill_cost (tr_result : result) (max_reg : int) : int array =
     let spill_cost = Array.make (max_reg + 1) 0 in
 
@@ -249,21 +245,16 @@ module MiniRiscCfg = struct
           spill_cost.(reg2) <- spill_cost.(reg2) + 1
         | _ -> ()
       ) instructions
-
     ) tr_result.translation;
 
     spill_cost
   ;;
 
+  (* Handle register spilling by rewriting instructions with temporary registers *)
   let handle_register_spill (reg : int) (mini_risc_translation : result) : unit =
-
-    (*  For each lablel 
-          -> if used in, insert spill code
-             -> if used as an operand -> add (loadI reg r2/r3)(load r2/r3 r2/r3)
-             -> if used as a destination -> change(dest as r3) add (loadI reg r2) (store r2 r3)
-    *)
-
-    (* Iter over all labels *)
+    (* For each label: if register is used, insert spill code
+       - if used as an operand -> add (loadI reg r2/r3)(load r2/r3 r2/r3)
+       - if used as a destination -> change(dest as r3) add (loadI reg r2) (store r2 r3) *)
 
     Hashtbl.iter (fun label instructions ->
 
@@ -326,7 +317,7 @@ module MiniRiscCfg = struct
               (LoadI (reg, 2) :: Load (2, 2) :: Urop (op, 2, 2) :: LoadI (r2, 3) :: Store(2, 3) :: acc)
             else
               (LoadI (reg, 2) :: Load (2, 2) :: Urop (op, 2, r2) :: acc)
-              
+
           | Urop (op, r1, r2) when r2 = reg ->
               (Urop (op, r1, 2) :: LoadI (r2, 3) :: Store(2, 3) :: acc)
 
