@@ -52,12 +52,12 @@ let string_of_label (label : label) : string =
 let string_of_instruction (instr : instruction) : string =
   match instr with
   | Nop -> "    nop"
-  | Brop (op, r1, r2, rd) -> Printf.sprintf "    %s r%d r%d r%d" (string_of_brop op) r1 r2 rd
-  | Biop (op, r1, n, rd) -> Printf.sprintf "    %s r%d %d r%d" (string_of_biop op) r1 n rd
-  | Urop (op, r1, rd) -> Printf.sprintf "    %s r%d r%d" (string_of_urop op) r1 rd
-  | Load (addr, reg) -> Printf.sprintf "    load r%d r%d" addr reg
-  | LoadI (value, reg) -> Printf.sprintf "    loadi %d r%d" value reg
-  | Store (reg, addr) -> Printf.sprintf "    store r%d r%d" reg addr
+  | Brop (op, r1, r2, rd) -> Printf.sprintf "    %s r%d r%d => r%d" (string_of_brop op) r1 r2 rd
+  | Biop (op, r1, n, rd) -> Printf.sprintf "    %s r%d %d => r%d" (string_of_biop op) r1 n rd
+  | Urop (op, r1, rd) -> Printf.sprintf "    %s r%d => r%d" (string_of_urop op) r1 rd
+  | Load (addr, reg) -> Printf.sprintf "    load r%d => r%d" addr reg
+  | LoadI (value, reg) -> Printf.sprintf "    loadi %d => r%d" value reg
+  | Store (reg, addr) -> Printf.sprintf "    store r%d => r%d" reg addr
   | Jump label -> Printf.sprintf "    jump %s" label
   | CJump (reg, labelT, labelF) -> Printf.sprintf "    cjump r%d %s %s" reg labelT labelF
 ;;
