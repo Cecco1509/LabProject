@@ -42,45 +42,7 @@ module MiniRiscCfg = struct
     reg
   ;;
 
-  let compute_aexp_branch_hight (exp : aexp) : int =
-    let rec eval_hight (exp: aexp) (level): int =
-      match exp with
-      | Num _ | Var _ -> level  (* No deeper expr *)
-      | Plus (a1, a2) -> 
-        let h1 = eval_hight a1 level+1 in
-        let h2 = eval_hight a2 level+1 in
-        if h1 > h2 then h1 else h2
-      | Minus (a1, a2) -> 
-        let h1 = eval_hight a1 level+1 in
-        let h2 = eval_hight a2 level+1 in
-        if h1 > h2 then h1 else h2
-      | Times (a1, a2) -> 
-        let h1 = eval_hight a1 level+1 in
-        let h2 = eval_hight a2 level+1 in
-        if h1 > h2 then h1 else h2
-      
-    in
-    
-    eval_hight exp 0
-  ;;
-
-  let compute_bexp_branch_hight (exp : bexp) : int =
-    let rec eval_hight (exp: bexp) (level): int =
-      match exp with
-      | Bool _ -> level  (* No deeper expr *)
-      | Not (b1) -> eval_hight b1 level+1
-      | And (b1,b2) -> 
-        let h1 = eval_hight b1 level+1 in
-        let h2 = eval_hight b2 level+1 in
-        if h1 > h2 then h1 else h2
-      | Less (a1, a2) -> 
-        let h1 = compute_aexp_branch_hight a1 in
-        let h2 = compute_aexp_branch_hight a2 in
-        if h1 > h2 then (h1 + level + 1) else (h2 + level + 1)
-    in 
-      eval_hight exp 0
-  ;;
-
+  (* Translate an arithmetic expression into MiniRisc instructions *)
   let rec translate_aexp (exp : aexp) (var_map : variable_map) (dest_reg : int) : instruction list =
     match exp with
     | Num n -> [LoadI (n, dest_reg)]  (* Load immediate value into register *)
@@ -131,6 +93,7 @@ module MiniRiscCfg = struct
       [Brop (Mult, dest_reg, temp_reg, dest_reg)]  (* Multiply two registers and store result in dest_reg *)
   ;;
 
+  (* Translate a boolean expression into MiniRisc instructions *)
   let rec translate_bexp (exp : bexp) (var_map : variable_map) (dest_reg : int) : instruction list =
     match exp with
     | Not (Bool b) -> if b then [LoadI (0, dest_reg)] else [LoadI (1, dest_reg)]
@@ -200,7 +163,11 @@ module MiniRiscCfg = struct
       (* Translate the arithmetic expression to MiniRisc instructions *)
       translate_aexp aexp var_map reg
 
-    | If (bexp) | While (bexp) -> translate_bexp bexp var_map 2
+    | If (bexp) | While (bexp) ->
+      (* Always put the condition result inside the register 2 *)
+      (* This operation is safe because the condition is always the only operation in the block or the last one *)
+      translate_bexp bexp var_map 2
+    ;;
 
   let translate_node (var_map : variable_map) (node : ControlFlowGraph.node) : label =
 

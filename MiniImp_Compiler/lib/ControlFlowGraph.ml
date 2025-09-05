@@ -129,7 +129,18 @@ module ControlFlowGraph = struct
   (**************************** Helper function that merges two consecutive cfg ***********************************)
   (* Merges the final and initial node of the CFGs *)
   let merge_cfg (first : cfg) (second : cfg) : cfg =
-    (* Retrieve all the edges to final node *)
+    
+    match second.i.node_type with
+    | While -> 
+      (* In case the second CFG starts with a While, we cannot merge the two nodes *)
+      { 
+        nodes = first.nodes @ (second.i :: second.nodes); 
+        edges = first.edges @ [(first.f.id, second.i.id)] @ second.edges; 
+        i = first.i; 
+        f = second.f 
+      }
+    | _ ->
+      (* Retrieve all the edges to final node *)
       let (edges, removed) = get_edges_to_final first in
 
       (* Creates new updated edges to block *)
@@ -166,7 +177,7 @@ module ControlFlowGraph = struct
         i = first.i;
         f = second.f
       }
-
+  ;;
 
   (**************************** Function to merge two uncontained CFGs ****************************)
   let merge_seq_cfgs_uncontained (cfg1: cfg option) (cfg2: cfg option) : cfg =
@@ -201,6 +212,7 @@ module ControlFlowGraph = struct
       }
     | (None, Some second) -> second
     | (Some first, Some second) -> merge_cfg first second
+  ;;
 
 
   (**************************** Function to create a control flow graph from a command ****************************)
