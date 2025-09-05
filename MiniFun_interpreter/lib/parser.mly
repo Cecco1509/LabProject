@@ -39,10 +39,10 @@ parterm:
   | LPAREN; t = trm; RPAREN                                                     { t }
 
 trm:
-  | FUN; x = VAR; ARROW; t = trm                                              { Fun(x, t) }
-  | LET; x = VAR; ASSIGN; t1 = trm; IN; t2 = trm;                           { Let(x, t1, t2) }
-  | LETFUN; f = VAR; x = VAR; ASSIGN; t1 = trm; IN; t2 = trm                { LetFun(f, x, t1, t2) }
-  | IF; b = sterm; THEN; t1 = trm; ELSE; t2 = trm                           { IfThenElse(b, t1, t2) }
+  | FUN; x = VAR; ARROW; t = trm                                                { Fun(x, t) }
+  | LET; x = VAR; ASSIGN; t1 = trm; IN; t2 = trm;                               { Let(x, t1, t2) }
+  | LETFUN; f = VAR; x = VAR; ASSIGN; t1 = trm; IN; t2 = trm                    { LetFun(f, x, t1, t2) }
+  | IF; b = sterm; THEN; t1 = trm; ELSE; t2 = trm                               { IfThenElse(b, t1, t2) }
   | t = appterm                                                                 { t }
 
 sterm: (* simple term *)
