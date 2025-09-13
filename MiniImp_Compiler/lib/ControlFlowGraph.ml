@@ -171,7 +171,13 @@ module ControlFlowGraph = struct
         edges = edges @ new_edges @ second.edges;
         i = combined_node;
       }
-      | _ -> {
+      | _ when second.i.id = second.f.id -> { (* Case: second CFG contains no nodes *)
+        nodes = first.nodes;
+        edges = edges @ new_edges @ second.edges;
+        i = first.i;
+        f = combined_node
+      }
+      | _ -> { (* General case: both CFGs contain nodes *)
         nodes = first.nodes @ [combined_node] @ second.nodes;
         edges = edges @ new_edges @ second.edges;
         i = first.i;

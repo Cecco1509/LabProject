@@ -90,8 +90,15 @@ let simplify_graph (igraph : Optimizer.interference_graph) (degree_map : (int, i
     acc @ [neighbors]
   ) [] [3; 2; 1; 0] in
 
+  (* Find max reg inside igraph *)
+  let max_reg = List.fold_left (fun acc reg ->
+    if reg > acc then reg else acc
+  ) 0 (List.of_seq (Hashtbl.to_seq_keys igraph)) in
+
   (* Retrieve spill cost *)
-  let spill_cost = MiniRiscCfg.compute_spill_cost mini_risc_result (Hashtbl.length igraph) in
+  (* This was the problematic line, causing an "index out of bounds" exception
+  let spill_cost = MiniRiscCfg.compute_spill_cost mini_risc_result (Hashtbl.length igraph) in *)
+  let spill_cost = MiniRiscCfg.compute_spill_cost mini_risc_result max_reg in
 
   (* Process the degree map *)
   while Hashtbl.length degree_map > 0 do
